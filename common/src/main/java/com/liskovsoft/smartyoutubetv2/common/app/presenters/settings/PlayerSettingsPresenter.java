@@ -96,7 +96,7 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
 
         List<OptionItem> master = new ArrayList<>();
         master.add(UiOptionItem.from(
-                "Ativar correcao de imagem (reabra o video ao ativar)",
+                "Ativar filtro OpenGL (reabra o video ao ativar)",
                 option -> {
                     ChanuoColorPrefs.setEnabled(getContext(), option.isSelected());
                     if (option.isSelected()) {
@@ -120,7 +120,9 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
         appendChanuoRadio(dialog, "Chanuo A1 | Contraste", ChanuoColorPrefs.CONTRAST,
                 new int[]{70, 80, 90, 100, 110, 120, 130}, "%");
         appendChanuoRadio(dialog, "Chanuo A1 | Saturacao", ChanuoColorPrefs.SATURATION,
-                new int[]{70, 85, 100, 110, 125, 150, 170}, "%");
+                new int[]{0, 70, 85, 100, 110, 125, 150, 170}, "% (0 = P/B teste)");
+        appendChanuoRadio(dialog, "Chanuo A1 | Gamma (sombras)", ChanuoColorPrefs.GAMMA,
+                new int[]{65, 75, 80, 90, 100, 110, 125, 150}, "%");
         appendChanuoRadio(dialog, "Chanuo A1 | Temperatura de cor", ChanuoColorPrefs.WARMTH,
                 new int[]{-20, -10, 0, 10, 20}, " (frio - / quente +)");
     }

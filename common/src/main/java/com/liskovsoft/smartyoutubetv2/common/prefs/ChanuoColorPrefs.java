@@ -16,6 +16,7 @@ public final class ChanuoColorPrefs {
     public static final String BRIGHTNESS = "brightness";    // -20..40, additive RGB offset
     public static final String CONTRAST = "contrast";        // percent, 70..130
     public static final String SATURATION = "saturation";    // percent, 70..170
+    public static final String GAMMA = "gamma";            // 65..150, 100 is neutral
     public static final String WARMTH = "warmth";            // red/blue offset, -20..20
     private static final String ENABLED = "enabled";
 
@@ -40,7 +41,7 @@ public final class ChanuoColorPrefs {
     }
 
     public static int get(Context context, String key) {
-        int def = (CONTRAST.equals(key) || SATURATION.equals(key)) ? 100 : 0;
+        int def = (CONTRAST.equals(key) || SATURATION.equals(key) || GAMMA.equals(key)) ? 100 : 0;
         return preferences(context).getInt(key, def);
     }
 
@@ -48,19 +49,22 @@ public final class ChanuoColorPrefs {
         final int low, high;
         if (BRIGHTNESS.equals(key)) { low = -20; high = 40; }
         else if (CONTRAST.equals(key)) { low = 70; high = 130; }
-        else if (SATURATION.equals(key)) { low = 70; high = 170; }
+        else if (SATURATION.equals(key)) { low = 0; high = 170; }
+        else if (GAMMA.equals(key)) { low = 65; high = 150; }
         else if (WARMTH.equals(key)) { low = -20; high = 20; }
         else return;
-        preferences(context).edit().putInt(key, Math.max(low, Math.min(high, value))).apply();
+        preferences(context).edit().putInt(key, Math.max(low, Math.min(high, value))).putBoolean(ENABLED, true).apply();
     }
 
     public static void applyDarkWallPreset(Context context) {
         // Safe starter preset: raise near-black levels with gentler contrast.
         preferences(context).edit()
-                .putInt(BRIGHTNESS, 18)
-                .putInt(CONTRAST, 90)
+                .putInt(BRIGHTNESS, 8)
+                .putInt(CONTRAST, 95)
                 .putInt(SATURATION, 110)
+                .putInt(GAMMA, 80)
                 .putInt(WARMTH, 0)
+                .putBoolean(ENABLED, true)
                 .apply();
     }
 
@@ -69,6 +73,7 @@ public final class ChanuoColorPrefs {
                 .putInt(BRIGHTNESS, 0)
                 .putInt(CONTRAST, 100)
                 .putInt(SATURATION, 100)
+                .putInt(GAMMA, 100)
                 .putInt(WARMTH, 0)
                 .apply();
     }

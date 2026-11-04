@@ -40,10 +40,17 @@ public class SurfacePlaybackFragment extends PlaybackSupportFragment {
         if (root == null) {
             throw new IllegalStateException("Can't create root of SurfacePlaybackFragment");
         }
-        mVideoSurfaceWrapper = (ChanuoColorPrefs.enabled(getContext()) ||
-                PlayerTweaksData.instance(getContext()).isTextureViewEnabled() ||
-                PlayerData.instance(getContext()).getRotationAngle() != 0) ?
-                new TextureViewWrapper(getContext(), root) : new SurfaceViewWrapper(getContext(), root);
+        // Use an explicit OpenGL shader while color correction is enabled.
+        // Avoid the TextureView layer paint path on Android 8.1 vendor builds.
+        if (ChanuoColorPrefs.enabled(getContext()) &&
+                PlayerData.instance(getContext()).getRotationAngle() == 0) {
+            mVideoSurfaceWrapper = new ChanuoGlSurfaceWrapper(getContext(), root);
+        } else if (PlayerTweaksData.instance(getContext()).isTextureViewEnabled() ||
+                PlayerData.instance(getContext()).getRotationAngle() != 0) {
+            mVideoSurfaceWrapper = new TextureViewWrapper(getContext(), root);
+        } else {
+            mVideoSurfaceWrapper = new SurfaceViewWrapper(getContext(), root);
+        }
         mVideoSurfaceRoot = root.findViewById(com.liskovsoft.smartyoutubetv2.tv.R.id.surface_root);
         mVideoSurfaceRoot.addView(mVideoSurfaceWrapper.getSurfaceView(), 0);
         mVideoSurfaceRoot.setAspectRatioListener((targetAspectRatio, naturalAspectRatio, aspectRatioMismatch) -> scaleIfNeeded());
