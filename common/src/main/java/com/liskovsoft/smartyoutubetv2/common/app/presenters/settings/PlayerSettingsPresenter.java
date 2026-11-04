@@ -14,6 +14,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.AppDialogPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.base.BasePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.service.SidebarService;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorUtil;
+import com.liskovsoft.smartyoutubetv2.common.prefs.ChanuoColorPrefs;
 import com.liskovsoft.smartyoutubetv2.common.prefs.GeneralData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
@@ -58,6 +59,7 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
 
         appendPlaybackModeCategory(settingsPresenter);
         appendVideoPresetsCategory(settingsPresenter);
+        appendChanuoImageSettings(settingsPresenter);
         appendPlayerButtonsCategory(settingsPresenter);
         appendNetworkEngineCategory(settingsPresenter);
         appendVideoBufferCategory(settingsPresenter);
@@ -81,6 +83,60 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
         appendDeveloperCategory(settingsPresenter);
 
         settingsPresenter.showDialog(getContext().getString(R.string.settings_player), mOnFinish);
+    }
+
+    /**
+     * TV remote friendly color adjustment. The A1 can also disable correction
+     * completely in case its Mali GPU cannot sustain TextureView composition.
+     */
+    private void appendChanuoImageSettings(AppDialogPresenter dialog) {
+        if (!ChanuoColorPrefs.isChanuoA1()) {
+            return;
+        }
+
+        List<OptionItem> master = new ArrayList<>();
+        master.add(UiOptionItem.from(
+                "Ativar correcao de imagem (reabra o video ao ativar)",
+                option -> {
+                    ChanuoColorPrefs.setEnabled(getContext(), option.isSelected());
+                    if (option.isSelected()) {
+                        // Tunneled decoding cannot be used with TextureView.
+                        mPlayerTweaksData.setTunneledPlaybackEnabled(false);
+                    }
+                    mRestartApp = true;
+                },
+                ChanuoColorPrefs.enabled(getContext())));
+        dialog.appendCheckedCategory("Chanuo A1 | Calibracao SDR", master);
+
+        dialog.appendSingleButton(UiOptionItem.from(
+                "Chanuo A1: aplicar preset para parede escura",
+                option -> ChanuoColorPrefs.applyDarkWallPreset(getContext())));
+        dialog.appendSingleButton(UiOptionItem.from(
+                "Chanuo A1: restaurar cores neutras",
+                option -> ChanuoColorPrefs.resetNeutral(getContext())));
+
+        appendChanuoRadio(dialog, "Chanuo A1 | Brilho", ChanuoColorPrefs.BRIGHTNESS,
+                new int[]{-20, -10, 0, 10, 18, 25, 30, 40}, "%");
+        appendChanuoRadio(dialog, "Chanuo A1 | Contraste", ChanuoColorPrefs.CONTRAST,
+                new int[]{70, 80, 90, 100, 110, 120, 130}, "%");
+        appendChanuoRadio(dialog, "Chanuo A1 | Saturacao", ChanuoColorPrefs.SATURATION,
+                new int[]{70, 85, 100, 110, 125, 150, 170}, "%");
+        appendChanuoRadio(dialog, "Chanuo A1 | Temperatura de cor", ChanuoColorPrefs.WARMTH,
+                new int[]{-20, -10, 0, 10, 20}, " (frio - / quente +)");
+    }
+
+    private void appendChanuoRadio(AppDialogPresenter dialog, String title,
+                                   String key, int[] values, String suffix) {
+        List<OptionItem> choices = new ArrayList<>();
+        int current = ChanuoColorPrefs.get(getContext(), key);
+        for (int value : values) {
+            final int choice = value;
+            choices.add(UiOptionItem.from(
+                    choice + suffix,
+                    option -> ChanuoColorPrefs.set(getContext(), key, choice),
+                    current == choice));
+        }
+        dialog.appendRadioCategory(title, choices);
     }
 
     private void appendOKButtonCategory(AppDialogPresenter settingsPresenter) {

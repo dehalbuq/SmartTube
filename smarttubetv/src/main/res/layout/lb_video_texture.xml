@@ -14,7 +14,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<TextureView
+<com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.ChanuoColorTextureView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/video_surface"
     android:layout_gravity="center"

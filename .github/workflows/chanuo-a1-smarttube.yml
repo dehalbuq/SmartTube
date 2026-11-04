@@ -1,0 +1,45 @@
+name: Compilar SmartTube Chanuo A1 ARMv7
+
+on:
+  push:
+    branches: [chanuo-a1-cor-video]
+    paths:
+      - 'common/src/main/java/com/liskovsoft/smartyoutubetv2/common/prefs/ChanuoColorPrefs.java'
+      - 'common/src/main/java/com/liskovsoft/smartyoutubetv2/common/app/presenters/settings/PlayerSettingsPresenter.java'
+      - 'smarttubetv/src/main/java/com/liskovsoft/smartyoutubetv2/tv/ui/playback/mod/surface/**'
+      - 'smarttubetv/src/main/res/layout/lb_video_texture.xml'
+      - '.github/workflows/chanuo-a1-smarttube.yml'
+  workflow_dispatch:
+
+jobs:
+  android-armv7:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        shell: bash
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses > /dev/null || true
+          "$SDKMGR" --install 'platforms;android-34' 'build-tools;34.0.0' 'ndk;21.0.6113669'
+      - name: Compilar variante debug
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon :smarttubetv:assembleStbetaDebug -x lint
+      - name: Empacotar APK ARMv7
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartTube-ChanuoA1-ARMv7-APK
+          path: smarttubetv/build/outputs/apk/stbeta/debug/*armeabi-v7a.apk
+          if-no-files-found: error
