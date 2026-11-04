@@ -1,0 +1,32 @@
+name: Compilar Chanuo A1 Diagnostico
+on:
+  push:
+    branches: [chanuo-a1-diagnostico]
+    paths:
+      - 'chanuo-diagnostico/**'
+      - '.github/workflows/chanuo-a1-diagnostico.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar diagnostico
+        working-directory: chanuo-diagnostico
+        run: gradle --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChanuoA1-Diagnostico-APK
+          path: chanuo-diagnostico/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
