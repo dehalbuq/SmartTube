@@ -255,7 +255,7 @@ public final class MainActivity extends Activity {
     private static void properties(StringBuilder out) {
         section(out, "PROPRIEDADES ANDROID (LISTA SEGURA)");
         Set<String> accepted = new HashSet<>(Arrays.asList(PROPERTY_KEYS));
-        Process p = null;
+        java.lang.Process p = null;
         try {
             p = new ProcessBuilder("getprop").redirectErrorStream(true).start();
             try (BufferedReader br = new BufferedReader(
