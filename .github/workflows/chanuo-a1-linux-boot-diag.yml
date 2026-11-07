@@ -1,0 +1,43 @@
+name: Compilar Chanuo A1 Linux Boot Diagnostico
+
+on:
+  push:
+    branches: [chanuo-a1-linux-boot-diag]
+    paths:
+      - 'chanuo-linux-boot-diag/**'
+      - '.github/workflows/chanuo-a1-linux-boot-diag.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            chanuo-linux-boot-diag
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparar SDK Android
+        shell: bash
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses > /dev/null || true
+          "$SDKMGR" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar diagnostico
+        working-directory: chanuo-linux-boot-diag
+        run: gradle --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChanuoA1-LinuxBoot-Diagnostico-APK
+          path: chanuo-linux-boot-diag/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
