@@ -40,12 +40,13 @@ import java.util.Set;
 import java.util.TimeZone;
 
 /**
- * Standalone non-root, no-permission, read-only hardware / boot diagnostic.
- * Never runs su, fastboot, reboot, dd, flash commands, or writes to sysfs.
+ * Standalone hardware / boot diagnostic with optional root-assisted read-only exports.
+ * The optional RootCollector invokes su only after user approval and reads whitelisted partitions.
  * Only writes a TXT report to the app's files directory or a user-chosen URI.
  */
 public final class MainActivity extends Activity {
     private static final int PICK_SAVE_TXT = 101;
+    private static final int PICK_ROOT_ZIP = 102;
     private static final int MAX_TEXT = 20000;
     private TextView status;
     private TextView preview;
@@ -94,6 +95,7 @@ public final class MainActivity extends Activity {
         addButton(content, "1. Coletar novamente", v -> collect());
         addButton(content, "2. Salvar TXT (escolher pasta)", v -> saveWithPicker());
         addButton(content, "3. Compartilhar texto do relatorio", v -> shareReport());
+        addButton(content, "4. Exportar ZIP de boot (requer ROOT)", v -> saveRootPackage());
 
         status = new TextView(this);
         status.setTextSize(16f);
@@ -436,6 +438,19 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void saveRootPackage() {
+        try {
+            Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("application/zip");
+            i.putExtra(Intent.EXTRA_TITLE, "ChanuoA1_RootBoot_Collector.zip");
+            startActivityForResult(i, PICK_ROOT_ZIP);
+        } catch (Throwable t) {
+            Toast.makeText(this, "Seletor de arquivo indisponivel: " + t,
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void shareReport() {
         if (report.length() == 0) return;
         try {
@@ -463,6 +478,25 @@ public final class MainActivity extends Activity {
                 Toast.makeText(this, "Falha ao salvar TXT: " + t,
                         Toast.LENGTH_LONG).show();
             }
+        } else if (request == PICK_ROOT_ZIP && result == RESULT_OK &&
+                data != null && data.getData() != null) {
+            final android.net.Uri uri = data.getData();
+            status.setText("Solicitando root: autorize este app no Magisk se aparecer uma janela.");
+            new Thread(() -> {
+                String outcome;
+                try {
+                    outcome = RootCollector.export(this, uri, report,
+                            progress -> runOnUiThread(() -> status.setText(progress)));
+                } catch (Throwable t) {
+                    outcome = "Erro ao criar ZIP: " + t.getClass().getSimpleName()
+                            + " - " + t.getMessage();
+                }
+                final String message = outcome;
+                runOnUiThread(() -> {
+                    status.setText(message);
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                });
+            }, "chanuo-root-export").start();
         }
     }
 }

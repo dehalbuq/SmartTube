@@ -17,3 +17,12 @@ SDK 35, min API 19, compilação Java Android ARM universal sem bibliotecas nati
 4. Enviar `ChanuoA1_Boot_USB_Hardware.txt` nesta conversa.
 
 A ausência de gadget USB ou das informações de Device Tree não confirma inviabilidade do projeto; são etapas para selecionar a técnica de boot sem arriscar a firmware.
+
+
+## Root Collector v2 (branch `chanuo-a1-root-collector`)
+
+Aplicativo com outro **applicationId**, instalável em paralelo ao diagnóstico antigo. Não contém exploit, usa `su -c` **somente se root temporário já estiver ativo** e autorizado pelo usuário. Executa comandos de leitura para consultar o bootloader, Device Tree, configurações de kernel e interfaces USB. Exporta um único ZIP via seletor de arquivos do Android com logs e, se disponíveis, `boot.img`, `recovery.img`, `lk.img`, `logo.img`, `dtb/dtbo.img`, além de `/sys/firmware/fdt` e `/proc/config.gz`. Valida tamanho a partir de `/proc/partitions` e calcula SHA256. Limite: 64 MiB por partição, 5 MiB por arquivo pequeno.
+
+**Não inclui** preloader, userdata, nvram, nvdata, protect, persist, metadata, RPMB ou conteúdo pessoal. **Não constitui backup completo da firmware**. Não remonta, atualiza, formata, faz flash nem desbloqueia. O comando `dd` tem exclusivamente `if=` (leitura do bloco; saída para stream ZIP) e NUNCA `of=` apontando dispositivo. Testar inicialmente root temporário com MTK Easy SU oficial. Se `su` não estiver disponível ou autorizado, exportador não lê blocos. A firmware pode bloquear a leitura independentemente do UID.
+
+Workflow desta branch compila o APK `ChanuoA1-Root-Collector-APK`.
