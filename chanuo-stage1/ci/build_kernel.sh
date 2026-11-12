@@ -21,8 +21,9 @@ mkdir -p kernel-out
 make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" FRT_defconfig
 # Ensure ramdisk support and console for /init RAM stage, no persistent mount.
 # Do not change board-specific drivers automatically: this is a candidate kernel only.
-kernel-src/scripts/config --file kernel-out/.config   -e BLK_DEV_INITRD -e DEVTMPFS -e DEVTMPFS_MOUNT   -e PROC_FS -e SYSFS -e PRINTK
+kernel-src/scripts/config --file kernel-out/.config   -e BLK_DEV_INITRD -e DEVTMPFS -e DEVTMPFS_MOUNT   -e PROC_FS -e SYSFS -e PRINTK -e ARM_APPENDED_DTB -e ARM_ATAG_DTB_COMPAT
 make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" olddefconfig
+grep -q "^CONFIG_ARM_APPENDED_DTB=y" kernel-out/.config || { echo "ERROR: ARM_APPENDED_DTB was not enabled"; exit 2; }
 echo "[Stage 1] Compiling vendor-derived ARMv7 zImage"
 make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" -j"$(nproc)" zImage 2>&1 | tee artifacts/build-kernel.log
 test -s kernel-out/arch/arm/boot/zImage
