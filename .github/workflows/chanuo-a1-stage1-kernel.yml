@@ -1,0 +1,41 @@
+name: Chanuo A1 Stage1 - compile MT6737 ARMv7 reference kernel
+on:
+  workflow_dispatch:
+  push:
+    branches: [chanuo-a1-linux-usb-stage1]
+    paths:
+      - 'chanuo-stage1/**'
+      - '.github/workflows/chanuo-a1-stage1-kernel.yml'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout Stage 1
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            chanuo-stage1
+          sparse-checkout-cone-mode: true
+      - name: Prepare ARM cross compiler and build deps
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gcc-arm-linux-gnueabi binutils-arm-linux-gnueabi bc bison flex \
+            libssl-dev libelf-dev make git python3 xz-utils file
+      - name: Compile MT6737 reference kernel (no flashing)
+        working-directory: chanuo-stage1
+        run: bash ci/build_kernel.sh
+      - name: Publish artifact for offline inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChanuoA1-Stage1-MT6737-REFERENCE-Kernel
+          path: chanuo-stage1/artifacts/
+          retention-days: 14
+          if-no-files-found: warn
