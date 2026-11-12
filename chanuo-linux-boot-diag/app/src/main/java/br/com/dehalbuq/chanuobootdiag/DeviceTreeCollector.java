@@ -125,7 +125,7 @@ public final class DeviceTreeCollector {
                 return;
             }
             // Bootargs can carry serialno and cannot safely be shared unmodified.
-            if (rel.equals("chosen/bootargs")) {
+            if (rel.equals("chosen/bootargs") || rel.startsWith("chosen/atag,")) {
                 errors.append("OMITIDO PARA PRIVACIDADE: ").append(rel)
                         .append(" (bootargs constam, com serial removido, no TXT)\n");
                 return;
