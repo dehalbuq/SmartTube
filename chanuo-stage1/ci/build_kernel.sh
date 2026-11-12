@@ -11,15 +11,20 @@ python3 -m lib2to3 -w -n kernel-src/tools/dct > artifacts/2to3-conversion.log 2>
 # Python's removed cmp() built-in is not transformed by lib2to3.
 sed -i '/sys.dont_write_bytecode = True/a\\ncmp = lambda a, b: (a > b) - (a < b)' kernel-src/tools/dct/DrvGen.py
 test -f kernel-src/arch/arm/configs/FRT_defconfig
-export ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
+# This kernel predates GCC 14; use Android's period-correct GCC 4.9 to avoid
+# subtly changing ARM assembler semantics with thousands of warning patches.
+git clone --depth=1 --single-branch --branch lineage-19.1 --no-tags \
+  https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git arm-gcc49
+export ARCH=arm CROSS_COMPILE="$PWD/arm-gcc49/bin/arm-linux-androideabi-"
+"${CROSS_COMPILE}gcc" --version | tee artifacts/compiler-version.txt
 mkdir -p kernel-out
-make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error=array-bounds -Wno-error=stringop-overflow -Wno-error=maybe-uninitialized -Wno-error=aggressive-loop-optimizations -Wno-error=attribute-alias -Wno-error=array-compare -Wno-error=stringop-overread" FRT_defconfig
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" FRT_defconfig
 # Ensure ramdisk support and console for /init RAM stage, no persistent mount.
 # Do not change board-specific drivers automatically: this is a candidate kernel only.
 kernel-src/scripts/config --file kernel-out/.config   -e BLK_DEV_INITRD -e DEVTMPFS -e DEVTMPFS_MOUNT   -e PROC_FS -e SYSFS -e PRINTK
-make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error=array-bounds -Wno-error=stringop-overflow -Wno-error=maybe-uninitialized -Wno-error=aggressive-loop-optimizations -Wno-error=attribute-alias -Wno-error=array-compare -Wno-error=stringop-overread" olddefconfig
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" olddefconfig
 echo "[Stage 1] Compiling vendor-derived ARMv7 zImage"
-make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error=array-bounds -Wno-error=stringop-overflow -Wno-error=maybe-uninitialized -Wno-error=aggressive-loop-optimizations -Wno-error=attribute-alias -Wno-error=array-compare -Wno-error=stringop-overread" -j"$(nproc)" zImage 2>&1 | tee artifacts/build-kernel.log
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" -j"$(nproc)" zImage 2>&1 | tee artifacts/build-kernel.log
 test -s kernel-out/arch/arm/boot/zImage
 cp kernel-out/arch/arm/boot/zImage artifacts/mt6737-nokia-reference-zImage
 cp kernel-out/.config artifacts/mt6737-reference-config.txt
