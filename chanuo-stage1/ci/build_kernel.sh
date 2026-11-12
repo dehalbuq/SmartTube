@@ -13,13 +13,13 @@ sed -i '/sys.dont_write_bytecode = True/a\\ncmp = lambda a, b: (a > b) - (a < b)
 test -f kernel-src/arch/arm/configs/FRT_defconfig
 export ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
 mkdir -p kernel-out
-make -C kernel-src O="$PWD/kernel-out" FRT_defconfig
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error" FRT_defconfig
 # Ensure ramdisk support and console for /init RAM stage, no persistent mount.
 # Do not change board-specific drivers automatically: this is a candidate kernel only.
 kernel-src/scripts/config --file kernel-out/.config   -e BLK_DEV_INITRD -e DEVTMPFS -e DEVTMPFS_MOUNT   -e PROC_FS -e SYSFS -e PRINTK
-make -C kernel-src O="$PWD/kernel-out" olddefconfig
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error" olddefconfig
 echo "[Stage 1] Compiling vendor-derived ARMv7 zImage"
-make -C kernel-src O="$PWD/kernel-out" -j"$(nproc)" zImage 2>&1 | tee artifacts/build-kernel.log
+make -C kernel-src O="$PWD/kernel-out" HOSTCFLAGS="-O2 -fcommon" KCFLAGS="-fcommon -Wno-error" -j"$(nproc)" zImage 2>&1 | tee artifacts/build-kernel.log
 test -s kernel-out/arch/arm/boot/zImage
 cp kernel-out/arch/arm/boot/zImage artifacts/mt6737-nokia-reference-zImage
 cp kernel-out/.config artifacts/mt6737-reference-config.txt
