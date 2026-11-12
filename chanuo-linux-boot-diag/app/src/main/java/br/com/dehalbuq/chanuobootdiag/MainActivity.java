@@ -42,10 +42,11 @@ import java.util.TimeZone;
 /**
  * Standalone non-root, no-permission, read-only hardware / boot diagnostic.
  * Never runs su, fastboot, reboot, dd, flash commands, or writes to sysfs.
- * Only writes a TXT report to the app's files directory or a user-chosen URI.
+ * Only writes TXT/ZIP reports to user-chosen storage or app's own directory.
  */
 public final class MainActivity extends Activity {
     private static final int PICK_SAVE_TXT = 101;
+    private static final int PICK_HARDWARE_ZIP = 103;
     private static final int MAX_TEXT = 20000;
     private TextView status;
     private TextView preview;
@@ -94,6 +95,7 @@ public final class MainActivity extends Activity {
         addButton(content, "1. Coletar novamente", v -> collect());
         addButton(content, "2. Salvar TXT (escolher pasta)", v -> saveWithPicker());
         addButton(content, "3. Compartilhar texto do relatorio", v -> shareReport());
+        addButton(content, "4. Exportar hardware/Device Tree ZIP (SEM ROOT)", v -> saveHardwareZip());
 
         status = new TextView(this);
         status.setTextSize(16f);
@@ -436,6 +438,18 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void saveHardwareZip() {
+        try {
+            Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("application/zip");
+            i.putExtra(Intent.EXTRA_TITLE, "ChanuoA1_DeviceTree_SemRoot.zip");
+            startActivityForResult(i, PICK_HARDWARE_ZIP);
+        } catch (Throwable t) {
+            Toast.makeText(this, "Seletor indisponivel: " + t, Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void shareReport() {
         if (report.length() == 0) return;
         try {
@@ -463,6 +477,18 @@ public final class MainActivity extends Activity {
                 Toast.makeText(this, "Falha ao salvar TXT: " + t,
                         Toast.LENGTH_LONG).show();
             }
+        } else if (request == PICK_HARDWARE_ZIP &&
+                result == RESULT_OK && data != null && data.getData() != null) {
+            final android.net.Uri uri = data.getData();
+            status.setText("Lendo Device Tree do Android sem root...");
+            new Thread(() -> {
+                final String message = DeviceTreeCollector.export(this, uri, report,
+                    text -> runOnUiThread(() -> status.setText(text)));
+                runOnUiThread(() -> {
+                    status.setText(message);
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                });
+            }, "chanuo-dt-export").start();
         }
     }
 }

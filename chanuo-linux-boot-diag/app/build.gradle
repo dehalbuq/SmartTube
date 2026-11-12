@@ -3,11 +3,11 @@ android {
   namespace 'br.com.dehalbuq.chanuobootdiag'
   compileSdk 35
   defaultConfig {
-    applicationId 'br.com.dehalbuq.chanuobootdiag'
+    applicationId 'br.com.dehalbuq.chanuonoroothardware'
     minSdk 19
     targetSdk 28
-    versionCode 1
-    versionName '1.0'
+    versionCode 3
+    versionName '3.0'
   }
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8

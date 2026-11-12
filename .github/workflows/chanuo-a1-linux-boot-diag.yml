@@ -1,8 +1,8 @@
-name: Compilar Chanuo A1 Linux Boot Diagnostico
+name: Compilar Chanuo A1 Device Tree Sem Root
 
 on:
   push:
-    branches: [chanuo-a1-linux-boot-diag]
+    branches: [chanuo-a1-noroot-hardware-export]
     paths:
       - 'chanuo-linux-boot-diag/**'
       - '.github/workflows/chanuo-a1-linux-boot-diag.yml'
@@ -38,6 +38,6 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: ChanuoA1-LinuxBoot-Diagnostico-APK
+          name: ChanuoA1-DeviceTree-SemRoot-APK
           path: chanuo-linux-boot-diag/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

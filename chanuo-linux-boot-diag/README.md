@@ -17,3 +17,8 @@ SDK 35, min API 19, compilação Java Android ARM universal sem bibliotecas nati
 4. Enviar `ChanuoA1_Boot_USB_Hardware.txt` nesta conversa.
 
 A ausência de gadget USB ou das informações de Device Tree não confirma inviabilidade do projeto; são etapas para selecionar a técnica de boot sem arriscar a firmware.
+
+
+## Exportador Device Tree v3 — sem root
+
+Branch `chanuo-a1-noroot-hardware-export`. APK independente (applicationId diferente), instalável junto ao diagnóstico antigo. Coleta binária das propriedades acessíveis em `/proc/device-tree`, com manifesto SHA-256 e relatório de recusas; adiciona arquivos de hardware CPU, eMMC, framebuffer, USB e frequências. Exporta ZIP com seletor `ACTION_CREATE_DOCUMENT` sem internet, sem root, sem exploit, sem comandos de escrita. Exclui dados de identificação conhecidos (serial/MAC/IMEI/chaves) e `chosen/bootargs` cru. Não gera firmware restaurável. Compatibilidade depende das permissões de leitura de cada nó na ROM.
