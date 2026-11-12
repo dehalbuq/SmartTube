@@ -5,6 +5,11 @@ KERNEL_URL="https://github.com/nokia-dev/android_kernel_nokia_mt6737m.git"
 echo "[Stage 1] source: $KERNEL_URL"
 git clone --depth=1 --single-branch --no-tags "$KERNEL_URL" kernel-src
 git -C kernel-src rev-parse HEAD | tee artifacts/KERNEL_UPSTREAM_SHA.txt
+# The 2018 MediaTek pinctrl .dws generator is Python 2; modern runner is Python 3.
+# Convert all its Python sources in a temporary CI checkout (not upstream).
+python3 -m lib2to3 -w -n kernel-src/tools/dct > artifacts/2to3-conversion.log 2>&1
+# Python's removed cmp() built-in is not transformed by lib2to3.
+sed -i '/sys.dont_write_bytecode = True/a\\ncmp = lambda a, b: (a > b) - (a < b)' kernel-src/tools/dct/DrvGen.py
 test -f kernel-src/arch/arm/configs/FRT_defconfig
 export ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-
 mkdir -p kernel-out
